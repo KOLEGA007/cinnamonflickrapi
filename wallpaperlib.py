@@ -1,9 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Script can be called  for searching photos
-    # Based on author name
-        # Example ./wallpaperlib.py name ondrej.kolin
-    # by tags
+# Check if exists ~/.cache/cinnamon/profiles path
+# $ mkdir -p ~/.cache/cinnamon/profiles
+# Script can be called  in two modes
+    # Author
+        # Get photos of author
+            # Example ./wallpaperlib.py author photos ondrej.kolin
+        # Get author profile photo
+            # Example ./wallpaperlib.py author profile ondrej.kolin
+    # Tags
         # Example ./wallpaperlib.py tags "sun beach" "all"
 import sys
 import xml.etree.ElementTree as ET
@@ -32,8 +37,30 @@ class flickr_api():
             return None
         url = self.prefix +"flickr.people.getPhotos&api_key=" + self.api_key + "&user_id="+ author_id + "&extras=url_o&format=rest"
         return self._feed_from_url(url,count)
+    #get profile photo of autor
+    #name = autor name
+    def get_author_profile_photo(self, name):
+        author_id = self.get_author_id(name)
+        if not(author_id):
+            return None
+        url = self.prefix + "flickr.people.getInfo&api_key=" + self.api_key + "&user_id=" + author_id
+        tree = ET.fromstring(urllib.urlopen(url).read());
+        if tree.attrib["stat"] <> "ok":
+            return None
+        farm = tree[0].attrib["iconfarm"]
+        server = tree[0].attrib["iconserver"]
+        nsid = tree[0].attrib["nsid"]
+        if (farm != 0 and server != 0):
+            url = "http://farm" + farm + ".staticflickr.com/" + server + "/buddyicons/" + nsid + ".jpg"
+        else:
+            url = "https://www.flickr.com/images/buddyicon.jpg"
+        local_url = self.path + self.service + "/profiles/" + name + ".jpg"
+        if not(os.path.isfile(local_url)):
+            urllib.urlretrieve(url, local_url)
+        return local_url
+
     #get photos based on tags
-    #tags = array of string tags, match = choice all of tags, any of tags, count= max number of photos
+    #tags = array of string tags, match = choice all of tags, any of tags, count= max number of photos  
     def get_by_tags(self, tags=[], match="any", count=20):
         tags = ",".join(tags)
         url = self.prefix + "flickr.photos.search&api_key="+self.api_key+"&tags="+tags+"&extras=url_o&format=rest"
@@ -107,14 +134,18 @@ class flickr_api():
         result += '\n\t\t]\n'
         result += '\t}\n}'
         return result
-    
+
 if __name__ == '__main__':
         flickr = flickr_api()
         # "Parse" args
         # Here is place for add browsing by tags support, etc.
         method = sys.argv[1] #can add tags support
-        if method == "name":
-            flickr.store_photos(flickr.get_author_photos(sys.argv[2]))
+        if method == "author":
+            if sys.argv[2] == "photos":
+                flickr.store_photos(flickr.get_author_photos(sys.argv[3]))
+            elif sys.argv[2] == "profile":
+                print flickr.get_author_profile_photo(sys.argv[3])
+                
         elif method == "tags":
             if len(sys.argv) < 4:
                 match_type = "any"
