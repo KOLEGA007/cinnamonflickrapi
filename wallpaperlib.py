@@ -1,11 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Script can be called  for searching photos
+    # Based on author name
+        # Example ./wallpaperlib.py name ondrej.kolin
+    # by tags
+        # Example ./wallpaperlib.py tags "sun beach" "all"
 import sys
 import xml.etree.ElementTree as ET
 import os.path
 import urllib
 from os.path import expanduser
-#In result will be stored the url of photo
 class flickr_api():
     #initing function
     def __init__(self):
@@ -22,7 +26,7 @@ class flickr_api():
         return tree[0].attrib["id"]
     #Get authors photos based on his name
     #name = name of author, count = max photos you want to download
-    def get_author_photos(self, name, count=5):
+    def get_author_photos(self, name, count=20):
         author_id = self.get_author_id(name)
         if not(author_id):
             return None
@@ -30,13 +34,13 @@ class flickr_api():
         return self._feed_from_url(url,count)
     #get photos based on tags
     #tags = array of string tags, match = choice all of tags, any of tags, count= max number of photos
-    def get_by_tags(self, tags=[], match="any", count=5):
+    def get_by_tags(self, tags=[], match="any", count=20):
         tags = ",".join(tags)
         url = self.prefix + "flickr.photos.search&api_key="+self.api_key+"&tags="+tags+"&extras=url_o&format=rest"
         return self._feed_from_url(url,count)
     #Based on api url returns array of photos
     #url = flickr api url, count = max of photos you want to download
-    def _feed_from_url(self, url, count=5):
+    def _feed_from_url(self, url, count= 20):
         result=[]
         tree = ET.fromstring(urllib.urlopen(url).read());
         #If error in respond
@@ -108,8 +112,12 @@ if __name__ == '__main__':
         flickr = flickr_api()
         # "Parse" args
         # Here is place for add browsing by tags support, etc.
-        method = "name" #can add tags support
+        method = sys.argv[1] #can add tags support
         if method == "name":
-            flickr.store_photos(flickr.get_author_photos(sys.argv[1]))
-        
-        
+            flickr.store_photos(flickr.get_author_photos(sys.argv[2]))
+        elif method == "tags":
+            if len(sys.argv) < 4:
+                match_type = "any"
+            else:
+                match_type = sys.argv[3]
+            flickr.store_photos(flickr.get_by_tags(sys.argv[2].split(" "), match_type))
