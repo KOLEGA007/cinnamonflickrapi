@@ -110,9 +110,42 @@ class flickr_api():
     def store_photos(self, photos):
         for photo in photos:
             print self.get_local_url(photo)
-            
+
+    #search groups by name
+    #text = search pattern
+        #returns an array of strings like "name:id"
+    def search_groups(self, text):
+        text = urllib.quote_plus(text) #escaping non url chars
+        url = self.prefix+"flickr.groups.search&api_key=" + self.api_key + "&text=" + text + "&format=rest"
+        tree = ET.fromstring(urllib.urlopen(url).read());
+        result = [];
+        for node in tree[0]:
+            result.append(node.attrib.get("name") + ":" + node.attrib.get("nsid"))  
+        return result
+    def get_group_profile_photo(self, id):
+        url = self.prefix + "flickr.groups.getInfo&api_key="+self.api_key+"&group_id="+id+"&format=rest"
+        tree = ET.fromstring(urllib.urlopen(url).read());
+        if tree.attrib["stat"] <> "ok":
+            return None
+        farm = tree[0].attrib["iconfarm"]
+        server = tree[0].attrib["iconserver"]
+        if (farm != 0 and server != 0):
+            url = "http://farm" + farm + ".staticflickr.com/" + server + "/buddyicons/" + id + ".jpg"
+        else:
+            url = "https://www.flickr.com/images/buddyicon.jpg"
+        local_url = self.path + self.service + "/profiles/" + id + ".jpg"
+        if not(os.path.isfile(local_url)):
+            urllib.urlretrieve(url, local_url)
+        return local_url
+        ##Get group feed photos
+        # group_id = id of group, count = max number of photos to be downloaded
+    def get_group_photos(self, group_id, count=20):
+        url = self.prefix +"flickr.groups.pools.getPhotos&api_key=" + self.api_key + "&group_id="+ group_id + "&extras=url_o&format=rest"
+        return self._feed_from_url(url,count)
     #creating a json output from array of photos
     #photos = photos array (typpicaly from _feed_from_url)
+    #in progress, no function now!
+    '''
     def get_json_output(self, photos):
         delimiter = False
         result = '{\n\t"photos": {\n'
@@ -134,6 +167,7 @@ class flickr_api():
         result += '\n\t\t]\n'
         result += '\t}\n}'
         return result
+    '''
 
 if __name__ == '__main__':
         flickr = flickr_api()
@@ -145,10 +179,17 @@ if __name__ == '__main__':
                 flickr.store_photos(flickr.get_author_photos(sys.argv[3]))
             elif sys.argv[2] == "profile":
                 print flickr.get_author_profile_photo(sys.argv[3])
-                
         elif method == "tags":
             if len(sys.argv) < 4:
                 match_type = "any"
             else:
                 match_type = sys.argv[3]
             flickr.store_photos(flickr.get_by_tags(sys.argv[2].split(" "), match_type))
+        elif method == "group":
+            if sys.argv[2] == "search":
+                for group in flickr.search_groups(sys.argv[3]):
+                    print group
+            elif sys.argv[2] == "profile":
+                print flickr.get_group_profile_photo(sys.argv[3])
+            elif sys.argv[2] == "photos":
+                flickr.store_photos(flickr.get_group_photos(sys.argv[3]))
