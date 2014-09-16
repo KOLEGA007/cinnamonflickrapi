@@ -10,6 +10,13 @@
             # Example ./wallpaperlib.py author profile ondrej.kolin
     # Tags
         # Example ./wallpaperlib.py tags "sun beach" "all"
+    # Group
+        #Search for groups (using groups just with ids!)
+            # Example ./wallpaperlib.py groups search Wallpaper
+        #Get group profile photo
+            # Example ./wallpaperlib.py groups profile 40961104@N00
+        #Get group photo pool
+            # Example ./wallpaperlib.oy groups photos 40961104@N00
 import sys
 import xml.etree.ElementTree as ET
 import os.path
