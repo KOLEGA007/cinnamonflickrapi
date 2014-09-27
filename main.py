@@ -16,9 +16,9 @@ import tempfile
 import commands
 
 flickr = Gtk.Dialog()
-flickr.set_title(_("Add Flickr Source"))
+flickr.set_title"Add Flickr Source")
 flickr.value = Gtk.Entry()
-flickr.label = Gtk.Label(_("Author's url: "))
+flickr.label = Gtk.Label("Author's url: ")
 flickr.box = Gtk.HBox()
 flickr.box.pack_start(flickr.label, False, 0, 5,)
 flickr.box.pack_start(flickr.value, False, 0, 5,)
