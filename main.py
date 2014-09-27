@@ -37,4 +37,3 @@ if res == Gtk.ResponseType.OK:
 else:
     flickr.hide()         
     print ("ERROR")   
-    return None
